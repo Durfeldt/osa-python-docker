@@ -4,8 +4,8 @@ RUN yum -y install epel-release
 RUN yum -y update
 RUN yum -y install gcc gcc-c++ gcc-gfortran \
                    git curl make zlib-devel bzip2 bzip2-devel \
-                   readline-devel sqlite sqlite-devel openssl \
-                   openssl-devel patch libjpeg libpng12 libX11 \
+                   readline-devel sqlite sqlite-devel openssl11 \
+                   openssl11-devel patch libjpeg libpng12 libX11 \
                    which libXpm libXext curlftpfs wget libgfortran file \
                    ruby-devel fpm rpm-build \
                    ncurses-devel \
@@ -57,28 +57,31 @@ RUN wget -q https://ds9.si.edu/download/centos7/ds9.centos7.8.5.tar.gz && \
 
 ADD init.sh /init.sh
 
-
-
-# python
-
 RUN git clone https://github.com/yyuu/pyenv.git /pyenv
 
-ARG python_version=3.10.11
+ARG python_version=3.8.2
 
-RUN echo 'export PYENV_ROOT="/pyenv"' >> /etc/pyenvrc && \
-    echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> /etc/pyenvrc && \
-    echo 'eval "$(pyenv init --path)"' >> /etc/pyenvrc && \
+RUN echo 'export PYENV_ROOT=/pyenv; export PATH="/pyenv/bin:$PATH"' >> /etc/pyenvrc && \
+    #echo 'eval "$(pyenv init --path)"' >> /etc/pyenvrc && \
     echo 'eval "$(pyenv init -)"' >> /etc/pyenvrc
-
+    
 #RUN source /etc/pyenvrc && which pyenv && pyenv init
-
-
 RUN source /etc/pyenvrc && which pyenv && PYTHON_CONFIGURE_OPTS="--enable-shared"  CFLAGS="-fPIC" CXXFLAGS="-fPIC" pyenv install $python_version && pyenv versions
 RUN source /etc/pyenvrc && pyenv shell $python_version && pyenv global $python_version && pyenv versions && pyenv rehash
 
 RUN echo 'source /etc/pyenvrc' >> /init.sh
 
 RUN yum install -y wcslib-devel swig
+
+#RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
+#    source /init.sh && \
+#    python -c 'import xspec; print(xspec.__file__)' && \
+#    pip install numpy scipy ipython jupyter matplotlib pandas astropy==2.0.11
+
+RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
+    source /init.sh && \
+    pip install numpy scipy ipython jupyter matplotlib pandas astropy==2.0.11
+
 
 ARG heasoft_version=6.28
 
@@ -104,15 +107,6 @@ RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
     hmake install
 
 
-
-#RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
-#    source /init.sh && \
-#    python -c 'import xspec; print(xspec.__file__)' && \
-#    pip install numpy scipy ipython jupyter matplotlib pandas astropy==2.0.11
-
-RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
-    source /init.sh && \
-    pip install numpy scipy ipython jupyter matplotlib pandas astropy==2.0.11
 
 
 RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
