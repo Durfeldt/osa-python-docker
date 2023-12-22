@@ -2,7 +2,7 @@ OSA_PLATFORM?=CentOS_7.8.2003_x86_64
 #https://www.isdc.unige.ch/~savchenk/gitlab-ci/integral/build/osa-build-binary-tarball/CentOS_7.8.2003_x86_64/latest/build-latest/builder-info.yml
 OSA_VERSION?=$(shell curl https://www.isdc.unige.ch/~savchenk/gitlab-ci/integral/build/osa-build-tarball/$(OSA_PLATFORM)/latest/latest/osa-version-ref.txt)
 ISDC_REF_CAT_VERSION?=43.0
-PYTHON_VERSION=3.8.2
+PYTHON_VERSION=3.10.11
 HEASOFT_VERSION=6.32.1
 
 OSA_IMAGE_TAG=${OSA_VERSION}-refcat-${ISDC_REF_CAT_VERSION}
@@ -18,7 +18,7 @@ push: build
 	docker push $(IMAGE_LATEST) 
 
 build: Dockerfile
-	docker build --no-cache --build-arg OSA_VERSION=$(OSA_VERSION) --build-arg python_version=$(PYTHON_VERSION) --build-arg heasoft_version=$(HEASOFT_VERSION) . -t $(IMAGE) 
+	docker build --build-arg OSA_VERSION=$(OSA_VERSION) --build-arg python_version=$(PYTHON_VERSION) --build-arg heasoft_version=$(HEASOFT_VERSION) . -t $(IMAGE) 
 	docker build --build-arg OSA_VERSION=$(OSA_VERSION) --build-arg python_version=$(PYTHON_VERSION) --build-arg heasoft_version=$(HEASOFT_VERSION) . -t $(IMAGE_LATEST)
 
 squash:

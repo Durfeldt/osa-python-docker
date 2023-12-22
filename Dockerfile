@@ -20,6 +20,7 @@ RUN yum -y install gcc gcc-c++ gcc-gfortran \
 
 RUN yum install -y centos-release-scl
 RUN yum install -y devtoolset-7*
+RUN yum install -y devtoolset-8* 
 
 RUN ln -s /usr/lib64/libpcre.so.1 /usr/lib64/libpcre.so.0
 
@@ -59,14 +60,16 @@ ADD init.sh /init.sh
 
 RUN git clone https://github.com/yyuu/pyenv.git /pyenv
 
-ARG python_version=3.8.2
+ARG python_version=3.10.11
 
 RUN echo 'export PYENV_ROOT=/pyenv; export PATH="/pyenv/bin:$PATH"' >> /etc/pyenvrc && \
     #echo 'eval "$(pyenv init --path)"' >> /etc/pyenvrc && \
     echo 'eval "$(pyenv init -)"' >> /etc/pyenvrc
     
-#RUN source /etc/pyenvrc && which pyenv && pyenv init
-RUN source /etc/pyenvrc && which pyenv && PYTHON_CONFIGURE_OPTS="--enable-shared"  CFLAGS="-fPIC" CXXFLAGS="-fPIC" pyenv install $python_version && pyenv versions
+# Require additions to run python 3.10 on CentOS 7
+RUN yum install -y openssl-devel openssl11-devel openssl11-lib 11
+
+RUN source /etc/pyenvrc && which pyenv && PYTHON_CONFIGURE_OPTS="--enable-shared"  CFLAGS="-fPIC" CXXFLAGS="-fPIC" CPPFLAGS="-I/usr/include/openssl11" LDFLAGS="-L/usr/lib64/openssl11 -lssl -lcrypto" pyenv install -v $python_version
 RUN source /etc/pyenvrc && pyenv shell $python_version && pyenv global $python_version && pyenv versions && pyenv rehash
 
 RUN echo 'source /etc/pyenvrc' >> /init.sh
@@ -80,7 +83,7 @@ RUN yum install -y wcslib-devel swig
 
 RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
     source /init.sh && \
-    pip install numpy scipy ipython jupyter matplotlib pandas astropy==2.0.11
+    pip install numpy scipy ipython jupyter matplotlib pandas astropy
 
 
 ARG heasoft_version=6.28
@@ -90,8 +93,9 @@ ADD build-heasoft.sh /build-heasoft.sh
 RUN echo '. /opt/rh/devtoolset-7/enable' >> /init.sh
     
 RUN export HOME_OVERRRIDE=/tmp/home && mkdir -pv /tmp/home/pfiles && \
-    source /init.sh && \
-    rm -rf /opt/heasoft && \
+    source /init.sh
+    
+RUN rm -rf /opt/heasoft && \
     bash build-heasoft.sh download
     
     
